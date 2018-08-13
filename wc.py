@@ -1,9 +1,15 @@
 # coding: utf-8
+import random
+import re
+from pprint import pprint
+
 import jieba
+import jieba.analyse
+import math
+import matplotlib.pyplot as plt
 # from numpy import unicode
 from scipy.misc import imread  # 这是一个处理图像的函数
 from wordcloud import WordCloud, STOPWORDS, ImageColorGenerator
-import matplotlib.pyplot as plt
 
 back_color = imread('WordCloudColorsByImg.jpg')  # 解析该图片
 
@@ -17,43 +23,67 @@ wc = WordCloud(background_color='white',  # 背景颜色
                # width=1000,  # 图片的宽
                # height=860  #图片的长
                )
-# WordCloud各含义参数请点击 wordcloud参数
-
-# 添加自己的词库分词，比如添加'金三胖'到jieba词库后，当你处理的文本中含有金三胖这个词，
-# 就会直接将'金三胖'当作一个词，而不会得到'金三'或'三胖'这样的词
-# jieba.add_word('金三胖')
-
-# 打开词源的文本文件
-text = open('dest.txt').read()
 
 
-# 该函数的作用就是把屏蔽词去掉，使用这个函数就不用在WordCloud参数中添加stopwords参数了
-# 把你需要屏蔽的词全部放入一个stopwords文本文件里即可
-def stop_words(texts):
-    words_list = []
-    word_generator = jieba.cut(texts, cut_all=False)  # 返回的是一个迭代器
-    with open('stopwords.txt') as f:
-        str_text = f.read()
-        # unicode_text = unicode(str_text, 'utf-8')  # 把str格式转成unicode格式
-        f.close()  # stopwords文本中词的格式是'一词一行'
-    for word in word_generator:
-        if word.strip() not in str_text:
-            words_list.append(word)
-    return ' '.join(words_list)  # 注意是空格
+def extract_hot_words(txt_path, topK=200):
+    """
+    extract hot words with TF-IDF weights
+    :param txt_path:
+    :return: dict
+    """
+    text = open(txt_path).read()
+    jieba.analyse.set_stop_words('./stopwords.txt')
+    hot_words = jieba.analyse.extract_tags(text, topK=topK, withWeight=True, allowPOS=())
+
+    words = {}
+    for word in hot_words:
+        if len(word[0]) > 1 and word[0].strip() != "" and not re.match("[0-9]+", word[0]):
+            words[word[0]] = int(word[1] * 1000)
+
+    return words
 
 
-text = stop_words(text)
-print(text)
-wc.generate(text)
-# 基于彩色图像生成相应彩色
-image_colors = ImageColorGenerator(back_color)
-# 显示图片
-plt.imshow(wc)
-# 关闭坐标轴
-plt.axis('off')
-# 绘制词云
-plt.figure()
-plt.imshow(wc.recolor(color_func=image_colors))
-plt.axis('off')
-# 保存图片
-wc.to_file('19th.png')
+def out_wordcloud(texts):
+    """
+    output word cloud image
+    :param texts:
+    :return:
+    """
+    wc.generate(" ".join([k for k in texts.keys()]))
+    # 基于彩色图像生成相应彩色
+    image_colors = ImageColorGenerator(back_color)
+    # 显示图片
+    plt.imshow(wc)
+    # 关闭坐标轴
+    plt.axis('off')
+    # 绘制词云
+    plt.figure()
+    plt.imshow(wc.recolor(color_func=image_colors))
+    plt.axis('off')
+    # 保存图片
+    wc.to_file('wc.png')
+
+
+def out_to_echarts(texts):
+    """
+
+    :param texts:dict
+    :return:
+    """
+    data = []
+    for k, v in texts.items():
+        data.append({"name": k, "value": v, "itemStyle": {
+            "normal": {
+                "color": "rgb(" + ",".join(
+                    [str(math.floor(random.random() * 160)), str(math.floor(random.random() * 160)),
+                     str(math.floor(random.random() * 160))]) + ")"
+            }
+        }})
+
+    return data
+
+
+if __name__ == '__main__':
+    words = extract_hot_words('dest.txt', 150)
+    # out_wordcloud(words)
+    pprint(out_to_echarts(words))
