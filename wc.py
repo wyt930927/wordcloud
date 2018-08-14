@@ -1,11 +1,11 @@
 # coding: utf-8
-import random
+# import random
 import re
 from pprint import pprint
 
 import jieba
 import jieba.analyse
-import math
+# import math
 import matplotlib.pyplot as plt
 # from numpy import unicode
 from scipy.misc import imread  # 这是一个处理图像的函数
@@ -31,7 +31,7 @@ def extract_hot_words(txt_path, topK=200):
     :param txt_path:
     :return: dict
     """
-    text = open(txt_path).read()
+    text = open(txt_path,'rb').read().decode('gbk')
     jieba.analyse.set_stop_words('./stopwords.txt')
     hot_words = jieba.analyse.extract_tags(text, topK=topK, withWeight=True, allowPOS=())
 
@@ -72,14 +72,14 @@ def out_to_echarts(texts):
     """
     data = []
     for k, v in texts.items():
-        data.append({"name": k, "value": v, "itemStyle": {
-            "normal": {
-                "color": "rgb(" + ",".join(
-                    [str(math.floor(random.random() * 160)), str(math.floor(random.random() * 160)),
-                     str(math.floor(random.random() * 160))]) + ")"
-            }
-        }})
-
+        # data.append({"name": k, "value": v, "itemStyle": {
+        #     "normal": {
+        #         "color": "rgb(" + ",".join(
+        #             [str(math.floor(random.random() * 160)), str(math.floor(random.random() * 160)),
+        #              str(math.floor(random.random() * 160))]) + ")"
+        #     }
+        # }})
+        data.append({"name": k, "value": v})
     return data
 
 
